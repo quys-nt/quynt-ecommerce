@@ -13,6 +13,9 @@ export default function Home() {
       <Button asChild>
         <Link href="/dashboard">Dashboard</Link>
       </Button>
+      <Button asChild>
+        <Link href="/dashboard/setting">Setting</Link>
+      </Button>
       <ModeToggle />
     </div>
   );
