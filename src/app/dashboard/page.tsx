@@ -1,22 +1,19 @@
-"use client";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import LogoutButton from "@/components/custom/LogoutButton";
-import type { NextRequest } from "next/server";
+import { redirect } from "next/navigation";
 
-export default function Dashboard(request: NextRequest) {
-  console.log(request);
+import { getCurrentUser } from "@/lib/firebase/firebase-admin";
+import PageContent from "@/components/PageContent";
+
+export default async function DashboardPage() {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect("/sign-in");
 
   return (
-    <div className="flex flex-col items-center justify-center gap-5 min-h-screen">
-      <h1 className="text-4xl">Dashboard Page</h1>
-      <Button asChild>
-        <Link href="/">Home Page</Link>
-      </Button>
-      <Button asChild>
-        <Link href="/dashboard/setting">Setting Page</Link>
-      </Button>
-      <LogoutButton />
-    </div>
+    <main className="container">
+      <PageContent
+        variant="dashboard"
+        currentUser={currentUser.toJSON() as typeof currentUser}
+      />
+    </main>
   );
 }
+
