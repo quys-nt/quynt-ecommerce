@@ -1,11 +1,8 @@
-import { redirect } from "next/navigation";
-
 import { getCurrentUser } from "@/lib/firebase/firebase-admin";
 import PageContent from "@/components/PageContent";
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser();
-  if (!currentUser) redirect("/sign-in");
 
   return (
     <main className="container">
@@ -16,4 +13,3 @@ export default async function DashboardPage() {
     </main>
   );
 }
-
