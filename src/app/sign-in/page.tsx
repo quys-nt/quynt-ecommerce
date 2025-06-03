@@ -8,8 +8,7 @@ export default async function SignInPage() {
   if (await isUserAuthenticated()) redirect("/dashboard");
 
   return (
-    <main className="container">
-      {/* <PageContent variant="sign-in" /> */}
+    <main>
       <LoginPage />
     </main>
   );

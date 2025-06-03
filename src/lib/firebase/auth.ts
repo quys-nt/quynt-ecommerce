@@ -5,7 +5,7 @@ import {
 } from "firebase/auth";
 
 import { APIResponse } from "@/types";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
@@ -50,9 +50,16 @@ export async function signOut() {
   }
 }
 
-export async function signInWithEmailAndPassword(email: string, password: string) {
+export async function signInWithEmailAndPassword(
+  email: string,
+  password: string,
+) {
   try {
-    const userCreds = await firebaseSignInWithEmailAndPassword(auth, email, password);
+    const userCreds = await firebaseSignInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
     const idToken = await userCreds.user.getIdToken();
 
     const response = await fetch("/api/auth/sign-in", {
@@ -62,35 +69,37 @@ export async function signInWithEmailAndPassword(email: string, password: string
       },
       body: JSON.stringify({ idToken }),
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to create session');
+      throw new Error("Failed to create session");
     }
 
-    const resBody = await response.json() as APIResponse<string>;
+    const resBody = (await response.json()) as APIResponse<string>;
     return resBody.success;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error signing in with email and password", error);
-    
-    // Phân loại lỗi chi tiết hơn
+
     let errorMessage = "Đăng nhập thất bại";
-    if (error instanceof Error) {
-      switch (error.message) {
-        case "Firebase: Error (auth/invalid-credential).":
-          errorMessage = "Email hoặc mật khẩu không đúng";
-          break;
-        case "Firebase: Error (auth/user-not-found).":
-          errorMessage = "Tài khoản không tồn tại";
-          break;
-        case "Firebase: Error (auth/wrong-password).":
-          errorMessage = "Mật khẩu không đúng";
-          break;
-        case "Firebase: Error (auth/user-disabled).":
-          errorMessage = "Tài khoản đã bị vô hiệu hóa";
-          break;
-      }
+    switch (error.code) {
+      case "auth/invalid-credential":
+        errorMessage = "Email hoặc mật khẩu không đúng";
+        break;
+      case "auth/user-not-found":
+        errorMessage = "Tài khoản không tồn tại";
+        break;
+      case "auth/wrong-password":
+        errorMessage = "Mật khẩu không đúng";
+        break;
+      case "auth/user-disabled":
+        errorMessage = "Tài khoản đã bị vô hiệu hóa";
+        break;
+      case "auth/too-many-requests":
+        errorMessage = "Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau.";
+        break;
+      default:
+        errorMessage = "Lỗi không xác định. Vui lòng thử lại.";
     }
-    
-    throw new Error(errorMessage); // Ném lỗi để xử lý ở component
+
+    throw new Error(errorMessage);
   }
 }

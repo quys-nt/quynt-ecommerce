@@ -1,25 +1,28 @@
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
-
-import { APIResponse } from "@/types";
+import { NextResponse } from "next/server";
 import { createSessionCookie } from "@/lib/firebase/firebase-admin";
 
-export async function POST(request: NextRequest) {
-  const reqBody = (await request.json()) as { idToken: string };
-  const idToken = reqBody.idToken;
+export async function POST(request: Request) {
+  const { idToken } = await request.json();
 
-  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+  try {
+    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    const sessionCookie = await createSessionCookie(idToken, { expiresIn });
 
-  const sessionCookie = await createSessionCookie(idToken, { expiresIn });
+    const response = NextResponse.json({ success: true }, { status: 200 });
 
-  cookies().set("__session", sessionCookie, {
-    maxAge: expiresIn,
-    httpOnly: true,
-    secure: true,
-  });
+    response.cookies.set("__session", sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
+    });
 
-  return NextResponse.json<APIResponse<string>>({
-    success: true,
-    data: "Signed in successfully.",
-  });
+    return response;
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Failed to create session cookie" },
+      { status: 401 },
+    );
+  }
 }
