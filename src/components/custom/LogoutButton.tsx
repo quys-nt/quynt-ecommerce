@@ -1,31 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button"; // Sử dụng shadcn-ui Button component
+import { signInWithGoogle, signOut } from "@/lib/firebase/auth";
+import { Button } from "@/components/ui/button";
 
 export default function LogoutButton() {
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/logout", {
-        method: "POST",
-      });
+  const handleSignOut = async () => {
+    const isOk = await signOut();
 
-      if (response.ok) {
-        console.log("Đăng xuất thành công");
-        router.push("/login"); // Chuyển hướng về trang đăng nhập
-      } else {
-        throw new Error("Logout failed");
-      }
-    } catch (error) {
-      console.log("Đăng xuất thất bại");
-    }
+    if (isOk) router.push("/sign-in");
   };
 
-  return (
-    <Button onClick={handleLogout} variant="outline">
-      Đăng xuất
-    </Button>
-  );
+  return <Button onClick={handleSignOut}>Logout</Button>;
 }

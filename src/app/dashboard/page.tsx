@@ -1,15 +1,14 @@
-import { getCurrentUser } from "@/lib/firebase/firebase-admin";
 import PageContent from "@/components/PageContent";
+import LogoutButton from "@/components/custom/LogoutButton";
 
 export default async function DashboardPage() {
-  const currentUser = await getCurrentUser();
 
   return (
     <main className="container">
-      <PageContent
-        variant="dashboard"
-        currentUser={currentUser.toJSON() as typeof currentUser}
-      />
+      <>
+        <h1>Dashboard Page</h1>
+        <LogoutButton />
+      </>
     </main>
   );
 }
