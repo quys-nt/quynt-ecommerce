@@ -9,7 +9,6 @@ export default function LogoutButton() {
 
   const handleSignOut = async () => {
     const isOk = await signOut();
-
     if (isOk) router.push("/sign-in");
   };
 

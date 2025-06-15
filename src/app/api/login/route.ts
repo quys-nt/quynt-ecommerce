@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Login API error:", error);
     return NextResponse.json(
