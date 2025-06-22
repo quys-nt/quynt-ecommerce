@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Settings,
   Camera,
+  Newspaper,
   LayoutDashboard,
 } from "lucide-react"
 
@@ -35,6 +36,7 @@ const data = {
     { name: "Orders", icon: ShoppingCart, url: "/dashboard/orders/"},
     { name: "Products", icon: Box, url: "/dashboard/products/"},
     { name: "Media", icon: Camera, url: "/dashboard/media/"},
+    { name: "Posts", icon: Newspaper, url: "/dashboard/posts/"},
     { name: "Settings", icon: Settings, url: "/dashboard/settings/"},
   ],
 }
