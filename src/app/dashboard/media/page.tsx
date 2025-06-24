@@ -1,9 +1,8 @@
 // app/dashboard/media/page.tsx
-// app/dashboard/media/page.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from "firebase/storage";
+import { useRef, useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,17 +15,16 @@ export default function MediaPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Load images from Firestore on page load.
   useEffect(() => {
     const fetchImages = async () => {
-      const listRef = ref(storage, "media/");
-      const res = await listAll(listRef);
-      const files = await Promise.all(
-        res.items.map(async (item) => {
-          const url = await getDownloadURL(item);
-          return { name: item.name, url };
-        })
-      );
-      setImages(files);
+      const snapshot = await getDocs(collection(db, "media"));
+      const loadedImages = snapshot.docs.map((doc) => ({
+        name: doc.data().name,
+        url: doc.data().url,
+        id: doc.id,
+      }));
+      setImages(loadedImages);
     };
     fetchImages();
   }, []);
@@ -34,20 +32,55 @@ export default function MediaPage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const fileRef = ref(storage, `media/${file.name}`);
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-    setImages((prev) => [...prev, { name: file.name, url }]);
-    toast.success("Image uploaded!");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "EV-ONE");
+
+    const res = await fetch("https://api.cloudinary.com/v1_1/dldjbhini/image/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.secure_url && data.public_id) {
+      setImages((prev) => [...prev, { name: data.public_id, url: data.secure_url }]);
+      // Save image metadata to Firestore
+      await addDoc(collection(db, "media"), { name: data.public_id, url: data.secure_url });
+      toast.success("Image uploaded to Cloudinary!");
+    } else {
+      toast.error("Upload failed.");
+    }
   };
 
   const handleDelete = async () => {
     if (!selectedImage) return;
-    await deleteObject(ref(storage, `media/${selectedImage.name}`));
-    setImages((prev) => prev.filter((img) => img.name !== selectedImage.name));
-    setSelectedImage(null);
-    setConfirmDelete(false);
-    toast.success("Image deleted!");
+
+    try {
+      const res = await fetch("/api/cloudinary/delete-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ public_id: selectedImage.name }),
+      });
+
+      if (res.ok) {
+        setImages((prev) => prev.filter((img) => img.name !== selectedImage.name));
+        // Delete image document from Firestore
+        const snapshot = await getDocs(collection(db, "media"));
+        const docToDelete = snapshot.docs.find((doc) => doc.data().name === selectedImage?.name);
+        if (docToDelete) {
+          await deleteDoc(doc(db, "media", docToDelete.id));
+        }
+        toast.success("Image deleted from Cloudinary!");
+      } else {
+        toast.error("Delete failed.");
+      }
+    } catch (error) {
+      toast.error("Error deleting image.");
+    } finally {
+      setSelectedImage(null);
+      setConfirmDelete(false);
+    }
   };
 
   return (
