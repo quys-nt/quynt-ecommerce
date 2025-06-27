@@ -92,6 +92,7 @@ export default function EditPostPage() {
         <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
         <Editor
           apiKey="pyo0kerowoz1hr7b0ubn790rm2w6chdnylo1q88t200lssw2"
+          cloudChannel="5"
           onInit={(evt, editor) => (editorRef.current = editor)}
           initialValue={content}
           init={{
